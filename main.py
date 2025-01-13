@@ -28,14 +28,13 @@ class Direction(Enum):
 @dataclass
 class Point():
     x: float
-    y: float
-    
+    y: float    
+
 
 class CarsWindowManual(pyglet.window.Window):
     def __init__(self, background, ego_data, ambulance_data):
         super().__init__()
-        self.set_size(WINDOW_WIDTH, WINDOW_HEIGHT)
-        self.set_minimum_size(WINDOW_WIDTH, WINDOW_HEIGHT)
+
         self.pos = Point(0, 0)
         self.pos.x, self.pos.y = self.get_location()
         self.set_location(self.pos.x - 300, self.pos.y - 200)
@@ -53,9 +52,14 @@ class CarsWindowManual(pyglet.window.Window):
         self.ambulance = shapes.Rectangle(x=ambulance_x, y=ambulance_y, width=AMBULANCE_WIDTH, height=AMBULANCE_HEIGHT, color=INDIANRED)
         self.ambulance.rotation = float(self.ambulance_data[self.frames_count][5])
         self.ambulance_arrow = []
-
+        
         self.background_img = background
         self.background_sprite = pyglet.sprite.Sprite(img=self.background_img)
+        self.screen_height, self.screen_width = self._get_screen_height_and_width()
+        self._scale_sprite_to_screen_height()
+
+        self.set_size(self.background_sprite.width, self.background_sprite.height)
+        self.set_minimum_size(self.background_sprite.width, self.background_sprite.height)
 
         self.frame_rate = FRAME_RATE // 6
 
@@ -63,6 +67,16 @@ class CarsWindowManual(pyglet.window.Window):
 
         self.event_loop = pyglet.app.EventLoop()
         pyglet.app.run(1 / self.frame_rate)
+
+    def _get_screen_height_and_width(self):
+        display = pyglet.display.get_display()
+        screen = display.get_default_screen()
+        return screen.height - 150, screen.width
+
+    def _scale_sprite_to_screen_height(self):
+        scale_factor = self.screen_height / self.background_sprite.image.height
+        self.background_sprite.scale = scale_factor
+        
 
     def on_draw(self):
         self.clear()
