@@ -8,14 +8,20 @@ from pyglet import shapes
 from colors import *
 import csv
 
-WINDOW_WIDTH = 1886
-WINDOW_HEIGHT = 3969
+WINDOW_HEIGHT = 1290
 FRAME_RATE = 30
 
 EGO_WIDTH = 13
-EGO_HEIGHT = 30
+EGO_HEIGHT = 500*(10/165)
 AMBULANCE_WIDTH = 13
 AMBULANCE_HEIGHT = 30
+
+# 10 pixels are 165 points in the pdf
+# 1 pixel = 16,5 points in the pdf
+# 1 point in the pdf = 10/165 pixel
+ONE_STEP_PNG = 10/165
+ZERO_POINT_X = 446/3
+ZERO_POINT_Y = 9793/11
 
 SCALE = 0.04
 
@@ -33,51 +39,70 @@ class Point():
 
 class CarsWindowManual(pyglet.window.Window):
     def __init__(self, background, ego_data, ambulance_data):
-        super().__init__()
+        super().__init__(resizable=True)
 
-        self.pos = Point(0, 0)
-        self.pos.x, self.pos.y = self.get_location()
-        self.set_location(self.pos.x - 300, self.pos.y - 200)
-        self.ego_data = ego_data
-        self.ambulance_data = ambulance_data
+        screen_width = self._get_screen_width()
+        scaled_width, scaled_height = self._get_scaled_width_and_height(background.width, background.height)
 
-        self.frames_count = 0
-        ego_x = float(self.ego_data[self.frames_count][1])
-        ego_y = float(self.ego_data[self.frames_count][2])
-        self.ego = shapes.Rectangle(x=ego_x, y=ego_y, width=EGO_WIDTH, height=EGO_HEIGHT, color=CADMIUMYELLOW)
-        self.ego.rotation = float(self.ego_data[self.frames_count][5])
-        self.ego_arrow = []
-        ambulance_x = float(self.ambulance_data[self.frames_count][1])
-        ambulance_y = float(self.ambulance_data[self.frames_count][2])
-        self.ambulance = shapes.Rectangle(x=ambulance_x, y=ambulance_y, width=AMBULANCE_WIDTH, height=AMBULANCE_HEIGHT, color=INDIANRED)
-        self.ambulance.rotation = float(self.ambulance_data[self.frames_count][5])
-        self.ambulance_arrow = []
+        self.set_size(scaled_width, scaled_height)
+        self.set_minimum_size(scaled_width, scaled_height)
         
         self.background_img = background
         self.background_sprite = pyglet.sprite.Sprite(img=self.background_img)
-        self.screen_height, self.screen_width = self._get_screen_height_and_width()
-        self._scale_sprite_to_screen_height()
+        self.background_sprite.height = scaled_height
+        self.background_sprite.width = scaled_width
 
-        self.set_size(self.background_sprite.width, self.background_sprite.height)
-        self.set_minimum_size(self.background_sprite.width, self.background_sprite.height)
+        self.sprite_center_x = float((screen_width/2) - (self.background_sprite.width/2))
+        self.set_location(self.sprite_center_x, 0)
+        self.ego_data = ego_data
+        self.ambulance_data = ambulance_data
 
-        self.frame_rate = FRAME_RATE // 6
+        self.zero_point = Point(ZERO_POINT_X, ZERO_POINT_Y)
+
+        self.frames_count = 0
+        ego_x, ego_y = self._calculate_position(self.ego_data[self.frames_count][1],self.ego_data[self.frames_count][2])
+        self.ego = shapes.Rectangle(x=ego_x, y=ego_y, width=EGO_WIDTH, height=EGO_HEIGHT, color=CADMIUMYELLOW)
+        self.ego.anchor_position = 6, 0
+        #self.ego.rotation = float(self.ego_data[self.frames_count][5])
+        self.ego_arrow = []
+
+        # x_left_in_pdf = 1870 , x_in_png = 262
+        # y_left_in_pdf = 13000 , y_in_png = 159
+        # self.left_line = shapes.BorderedRectangle(x=262, y=159, width=1, height=EGO_HEIGHT, color=CADMIUMYELLOW, border_color=CADMIUMYELLOW)
+        # x_middle_in_pdf = 2035, x_in_png = 272
+        # y_middle_in_pdf = 13000 y_in_png = 159
+        # self.middle_line = shapes.BorderedRectangle(x=272, y=159, width=1, height=EGO_HEIGHT, color=RED1, border_color=RED1)
+        # x_right_line_pdf = 2200 , x_in_png = 282
+        # y_right_line_pdf = 13000 , y_in_png = 159
+        # self.right_line = shapes.BorderedRectangle(x=282, y=159, width=1, height=EGO_HEIGHT, color=CADETBLUE1, border_color=CADETBLUE1)
+
+        # ambulance_x = float(self.ambulance_data[self.frames_count][1])
+        # ambulance_y = float(self.ambulance_data[self.frames_count][2])
+        # self.ambulance = shapes.Rectangle(x=ambulance_x, y=ambulance_y, width=AMBULANCE_WIDTH, height=AMBULANCE_HEIGHT, color=INDIANRED)
+        # self.ambulance.rotation = float(self.ambulance_data[self.frames_count][5])
+        # self.ambulance_arrow = []
+
+        self.frame_rate = FRAME_RATE
 
         self.pause = False
 
         self.event_loop = pyglet.app.EventLoop()
         pyglet.app.run(1 / self.frame_rate)
 
-    def _get_screen_height_and_width(self):
+    def _get_screen_width(self):
         display = pyglet.display.get_display()
         screen = display.get_default_screen()
-        return screen.height - 150, screen.width
-
-    def _scale_sprite_to_screen_height(self):
-        scale_factor = self.screen_height / self.background_sprite.image.height
-        self.background_sprite.scale = scale_factor
+        return screen.width
         
-
+    def _get_scaled_width_and_height(self, img_width, img_height):
+        scale_factor = img_width / img_height
+        return scale_factor * WINDOW_HEIGHT, WINDOW_HEIGHT
+    
+    def _calculate_position(self, pos_x, pos_y):
+        x_in_png = abs((ONE_STEP_PNG * float(pos_x)) + self.zero_point.x)
+        y_in_png = abs((ONE_STEP_PNG * float(pos_y)) - self.zero_point.y)
+        return x_in_png, y_in_png
+        
     def on_draw(self):
         self.clear()
         self.background_sprite.draw()
@@ -85,32 +110,34 @@ class CarsWindowManual(pyglet.window.Window):
             self.frames_count = min(self.frames_count + 1, len(self.ego_data))
             self._update_game()
         self.ego.draw()
-        self.ambulance.draw()
 
         for shape in self.ego_arrow:
             shape.draw()
-        for shape in self.ambulance_arrow:
-            shape.draw()
+        # for shape in self.ambulance_arrow:
+        #     shape.draw()
         self._update_cars()
         # self.draw()
 
     def _update_game(self):
         if self.frames_count < len(self.ego_data):
-            self.ego_arrow = []
-            ego_x = float(self.ego_data[self.frames_count][1])
-            ego_y = float(self.ego_data[self.frames_count][2])
+            ego_x, ego_y = self._calculate_position(self.ego_data[self.frames_count][1],self.ego_data[self.frames_count][2])
             self.ego = shapes.Rectangle(x=ego_x, y=ego_y, width=EGO_WIDTH, height=EGO_HEIGHT, color=CADMIUMYELLOW)
-            self.ego.rotation = float(self.ego_data[self.frames_count][5])
-            acc_direction = self._get_acc_direction(self.ego_data[self.frames_count][9], self.ego_data[self.frames_count][11])
-            turn_direction = self._get_acc_direction(self.ego_data[self.frames_count][9], self.ego_data[self.frames_count][11])
-            if acc_direction != 0:
-                self.ego_arrow = self._draw_arrow(Point(ego_x, ego_y), acc_direction, turn_direction)
+            self.ego.anchor_position = 6, 0
+            # self.ego_arrow = []
+            # ego_x = float(self.ego_data[self.frames_count][1])
+            # ego_y = float(self.ego_data[self.frames_count][2])
+            # self.ego = shapes.Rectangle(x=ego_x, y=ego_y, width=EGO_WIDTH, height=EGO_HEIGHT, color=CADMIUMYELLOW)
+            # self.ego.rotation = float(self.ego_data[self.frames_count][5])
+            # acc_direction = self._get_acc_direction(self.ego_data[self.frames_count][9], self.ego_data[self.frames_count][11])
+            # turn_direction = self._get_acc_direction(self.ego_data[self.frames_count][9], self.ego_data[self.frames_count][11])
+            # if acc_direction != 0:
+            #     self.ego_arrow = self._draw_arrow(Point(ego_x, ego_y), acc_direction, turn_direction)
 
-            self.ambulance_arrow = []
-            ambulance_x = float(self.ambulance_data[self.frames_count][1])
-            ambulance_y = float(self.ambulance_data[self.frames_count][2])
-            self.ambulance = shapes.Rectangle(x=ambulance_x, y=ambulance_y, width=AMBULANCE_WIDTH, height=AMBULANCE_HEIGHT, color=INDIANRED)
-            self.ambulance.rotation = float(self.ambulance_data[self.frames_count][5])
+            # self.ambulance_arrow = []
+            # ambulance_x = float(self.ambulance_data[self.frames_count][1])
+            # ambulance_y = float(self.ambulance_data[self.frames_count][2])
+            # self.ambulance = shapes.Rectangle(x=ambulance_x, y=ambulance_y, width=AMBULANCE_WIDTH, height=AMBULANCE_HEIGHT, color=INDIANRED)
+            # self.ambulance.rotation = float(self.ambulance_data[self.frames_count][5])
             # self.ambulance_arrow = self._draw_arrow(Point(ambulance_x, ambulance_y), Direction.UP)
         
 
