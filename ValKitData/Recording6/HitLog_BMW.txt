@@ -1,0 +1,2 @@
+2025-01-27 12:25:50: BMW_Series7_Pawn_C_2147460246 - collision with - BP_Obstacle_C
+2025-01-27 12:25:56: BMW_Series7_Pawn_C_2147460246 - collision with - BP_Obstacle_C

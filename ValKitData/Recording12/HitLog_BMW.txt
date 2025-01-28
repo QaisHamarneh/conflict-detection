@@ -1,0 +1,2 @@
+2025-01-27 12:45:58: BMW_Series7_Pawn_C_2147460246 - collision with - BP_TEST_MetaHuman_AI_5_C
+2025-01-27 12:45:58: BMW_Series7_Pawn_C_2147460246 - collision with - BP_TEST_MetaHuman_AI_5_C
