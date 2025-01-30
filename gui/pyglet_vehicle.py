@@ -1,4 +1,4 @@
-import colors
+import gui.colors as colors
 from pyglet import shapes
 import random
 from pyglet.gl import GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA
@@ -11,7 +11,7 @@ class Vehicle(shapes.Rectangle):
             width, 
             height, 
             rotation: float, 
-            color: tuple[int, int, int, int] | tuple[int, int, int] = None,
+            color: tuple[int, int, int] = None,
             blend_src: int = GL_SRC_ALPHA,
             blend_dest: int = GL_ONE_MINUS_SRC_ALPHA, 
             batch = None, 
