@@ -11,6 +11,12 @@ import translation.image_translation as image_translation
 import gui.pyglet_vehicle as pyglet_vehicle
 import gui.gui_constants as gui_constants
 import translation.data_constants
+import gui.colors
+
+X_MIDDLE_LINE_BOTTOM = 3250
+Y_MIDDLE_LINE_BOTTOM = 500
+X_MIDDLE_LINE_TOP = 3050
+Y_MIDDLE_LINE_TOP = 19000
 
 class Direction(Enum):
     UP = 1
@@ -33,39 +39,58 @@ class CarsWindowManual(pyglet.window.Window):
         self.set_location(image.centered_x(), 0)
         
         self.background_sprite = image.image_to_sprite()
-
         self.frames_count = 0
+        self.max_len = len(data.translated_data[0])
         self.data = data
+        self.vehicle_list = []
+        self.vehicle_batch = pyglet.graphics.Batch()
 
-        self.car = pyglet_vehicle.Vehicle(
-            x=self.data.pos_x(self.frames_count),
-            y=self.data.pos_y(self.frames_count),
-            width=self.data.translate_x(gui_constants.EGO_WIDTH),
-            height=self.data.translate_y(gui_constants.EGO_HEIGHT),
-            rotation=self.data.rotation(self.frames_count)
+        for data_file_index in range(len(self.data.translated_data)):
+            vehicle = pyglet_vehicle.Vehicle(
+                type=self.data.type(data_file_index=data_file_index),
+                x=self.data.pos_x(data_file_index=data_file_index, row=self.frames_count),
+                y=self.data.pos_y(data_file_index=data_file_index, row=self.frames_count),
+                width=self.data.translate_x(gui_constants.EGO_WIDTH),
+                height=self.data.translate_y(gui_constants.EGO_HEIGHT),
+                rotation=self.data.rotation(data_file_index=data_file_index, row=self.frames_count),
+                batch=self.vehicle_batch
+                )
+            self.vehicle_list.append(vehicle)
+            self.max_len = min(self.max_len, len(self.data.translated_data[data_file_index]))
+
+        self.test_line = pyglet.shapes.Line(
+            x=self.data.translate_x(X_MIDDLE_LINE_BOTTOM),
+            y=self.data.translate_y(Y_MIDDLE_LINE_BOTTOM),
+            x2=self.data.translate_x(X_MIDDLE_LINE_TOP),
+            y2=self.data.translate_y(Y_MIDDLE_LINE_TOP),
             )
-
-        self.frame_rate = gui_constants.FRAME_RATE
+        
+        self.test_line.visible = False
 
         self.pause = False
 
         self.event_loop = pyglet.app.EventLoop()
-        pyglet.app.run(1 / self.frame_rate)
+        pyglet.app.run(1 / gui_constants.FRAME_RATE)
         
     def on_draw(self):
         self.clear()
         self.background_sprite.draw()
+        self.test_line.draw()
         if not self.pause:
-            self.frames_count = min(self.frames_count + 1, len(self.data.translated_data))
+            self.frames_count = min(self.frames_count + 1, self.max_len)
             self._update_game()
-        self.car.draw()
+        self.vehicle_batch.draw()
 
     def _update_game(self):
-        if self.frames_count < len(self.data.translated_data):
-            self.car.update_position(self.data.pos_x(self.frames_count),
-                                     self.data.pos_y(self.frames_count),
-                                     self.data.rotation(self.frames_count))
-            self.car.draw()
+        if self.frames_count < self.max_len:
+            for data_file_index in range(len(self.vehicle_list)):
+                self.vehicle_list[data_file_index].update_position(
+                    self.data.pos_x(data_file_index=data_file_index, row=self.frames_count),
+                    self.data.pos_y(data_file_index=data_file_index, row=self.frames_count),
+                    self.data.rotation(data_file_index=data_file_index, row=self.frames_count)
+                    )
+                
+                
         
 
     # def _get_acc_direction(self, throttle, brake):

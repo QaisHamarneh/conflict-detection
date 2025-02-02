@@ -8,3 +8,7 @@ DATA_Y = 2
 DATA_YAW = 5
 
 ANGLE_COMPENSATION = 90
+
+MAC_OS = 'darwin'
+LINUX = 'linux'
+WINDOWS = 'win32'
