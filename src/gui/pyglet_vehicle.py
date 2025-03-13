@@ -1,12 +1,14 @@
-import gui.colors as colors
 from pyglet import shapes
 from pyglet.gl import GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA
-import gui.vehicle_types as vehicle_types
+
+import src.gui.colors as colors
+import src.gui.vehicle_type as vehicle_type
 
 class Vehicle(shapes.Rectangle):
     def __init__(
             self,
-            type: vehicle_types.Type, 
+            id,
+            type: vehicle_type.Type, 
             x, 
             y, 
             width, 
@@ -18,7 +20,8 @@ class Vehicle(shapes.Rectangle):
             group = None, 
             program = None):
         
-        if type == vehicle_types.Type.AMBULANCE:
+        self.id = id
+        if type == vehicle_type.Type.AMBULANCE:
             super().__init__(x, y, width, height, colors.RED1, blend_src, blend_dest, batch, group, program)
         else:
             super().__init__(x, y, width, height, colors.BLUE, blend_src, blend_dest, batch, group, program)
