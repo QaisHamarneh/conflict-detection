@@ -5,6 +5,9 @@ from src.gui.colors import *
 from src.gui.vehicle_type import VehicleType
 
 class Vehicle(shapes.Rectangle):
+    """
+    Used to represent the vehicles on the map.
+    """
     def __init__(
             self,
             id,

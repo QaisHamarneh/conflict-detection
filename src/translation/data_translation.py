@@ -47,12 +47,13 @@ def adapt_data(directory, image_width, image_height, translate: bool) -> list:
         if datapoints is None:
             continue
 
-        if translate:
+        if translate: # convert data scale and translate data points
             for row in range(len(datapoints)):
                 datapoints[row][DATA_X] = translate_x(image_width, abs(float(datapoints[row][DATA_X]) + X_ZERO_DISPLACEMENT))
                 datapoints[row][DATA_Y] = translate_y(image_height, abs(float(datapoints[row][DATA_Y]) + Y_ZERO_DISPLACEMENT))
-        else:
+        else: # only convert data scale
             for row in range(len(datapoints)):
+                # this sets x_0 and y_0 to be at the down left corner of the image
                 datapoints[row][DATA_X] = abs(float(datapoints[row][DATA_X]) + X_ZERO_DISPLACEMENT)
                 datapoints[row][DATA_Y] = abs(float(datapoints[row][DATA_Y]) + Y_ZERO_DISPLACEMENT)
 

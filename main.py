@@ -8,4 +8,5 @@ def main(data_directory: str):
     CarsWindowManual(background, data_directory)
 
 if __name__ == '__main__':
+    # select recording
     main('val_kit_data/Recording5')

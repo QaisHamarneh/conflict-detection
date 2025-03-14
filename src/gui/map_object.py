@@ -1,6 +1,9 @@
 from src.gui.map_object_type import OjectType
 
 class MapObject:
+    """
+    Used to represent different kinds of map objects like lines or rectangles.
+    """
     def __init__(self, id: str):
         self._id = id
         self._obj_type = OjectType.NO_TYPE

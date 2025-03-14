@@ -1,7 +1,6 @@
 from src.translation.data_translation import translate_x, translate_y
 from src.gui.map_object import MapObject
 from src.gui.map_line import MapLine
-from src.gui.map_rectangle import MapRectangle
 
 X_MIDDLE_LINE_BOTTOM = 3300
 Y_MIDDLE_LINE_BOTTOM = 500

@@ -12,5 +12,8 @@ pip install -r requirements.txt
 
 ## Run
 
-To run the code, just run the `main.py` file.
-You can also test some properties of the environment manually using the files `gui/pyglet_class_test.py` and `gui/pyglet_gui_manual.py`.
+To run the code, select a recording and run the `main.py` file.
+
+## Results
+
+The resulting collision file will be saved as collision_log.csv in the corresponding recording directory.

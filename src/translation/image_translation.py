@@ -5,24 +5,27 @@ import sys
 from src.translation.data_constants import *
 
 def _screen_size():
-        screen_width = 0
-        screen_height = 0
+    """
+    Get the maximum possible screen resolution so that the pyglet game window is properly set.
+    """
+    screen_width = 0
+    screen_height = 0
 
-        if (sys.platform == MAC_OS):
-            display_id = CG.CGMainDisplayID()
+    if (sys.platform == MAC_OS):
+        display_id = CG.CGMainDisplayID()
 
-            modes = CG.CGDisplayCopyAllDisplayModes(display_id, None)
-            
-            for mode in modes:
-                width = CG.CGDisplayModeGetWidth(mode)
-                height = CG.CGDisplayModeGetHeight(mode)
-                screen_width = max(screen_width, width)
-                screen_height = max(screen_height, height)
+        modes = CG.CGDisplayCopyAllDisplayModes(display_id, None)
+        
+        for mode in modes:
+            width = CG.CGDisplayModeGetWidth(mode)
+            height = CG.CGDisplayModeGetHeight(mode)
+            screen_width = max(screen_width, width)
+            screen_height = max(screen_height, height)
 
-        elif (sys.platform == LINUX):
-            pass
-        else:
-            pass
+    elif (sys.platform == LINUX):
+        pass
+    else:
+        pass
 
         return screen_width, screen_height
     

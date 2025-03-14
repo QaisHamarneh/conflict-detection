@@ -50,7 +50,7 @@ def get_rotated_edges(rect: pyglet.shapes.Rectangle):
 
 def _segments_intersect(A1, A2, U, V):
     """
-    Algorithm taken from https://www.baeldung.com/cs/intersection-line-segment-rectangle. 
+    Algorithm taken and adapted from https://www.baeldung.com/cs/intersection-line-segment-rectangle. 
     """
     A = np.array([[A2[0] - A1[0], U[0] - V[0]], [A2[1] - A1[1], U[1]- V[1]]])
 

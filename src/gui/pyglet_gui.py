@@ -41,6 +41,7 @@ class CarsWindowManual(pyglet.window.Window):
         self.vehicle_list = []
         self.vehicle_batch = pyglet.graphics.Batch()
 
+        # vehicle creation
         for data_file_index in range(len(self.translated_data)):
             vehicle = Vehicle(
                 id=get_vehicle_id(data=self.translated_data, data_file_index=data_file_index),
@@ -87,6 +88,7 @@ class CarsWindowManual(pyglet.window.Window):
                     
                     for object in self.map_obj:
                         if object in self.vehicle_list[data_file_index].intersection:
+                            # write entry for last intersection with obstacle
                             if not check_intersection(self.vehicle_list[data_file_index], object):
                                 self.vehicle_list[data_file_index].remove_intersection_object(object)
                                 self.collision_list.append([
@@ -97,6 +99,7 @@ class CarsWindowManual(pyglet.window.Window):
                                     translate_y_back(self.vehicle_list[data_file_index].y, self.scaled_height) 
                                 ])
                         else:
+                            # write entry for first intersection with obstacle
                             if check_intersection(self.vehicle_list[data_file_index], object):
                                 self.vehicle_list[data_file_index].add_intersection_object(object)
                                 self.collision_list.append([
