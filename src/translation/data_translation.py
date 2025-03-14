@@ -7,15 +7,9 @@ from src.util.file_util import read_csv_data_file
 
 def translate_x(pos_x, image_width):
     return pos_x * float((image_width/2)/MIDDLE_OF_PNG_X_SCALE)
-
-def translate_x_back(pos_x, image_width):
-    return pos_x / float((image_width/2)/MIDDLE_OF_PNG_X_SCALE)
     
 def translate_y(pos_y, image_height):
     return pos_y * float((image_height/2)/MIDDLE_OF_PNG_Y_SCALE)
-
-def translate_y_back(pos_y, image_height):
-    return pos_y / float((image_height/2)/MIDDLE_OF_PNG_Y_SCALE)
 
 def get_vehicle_id(data, data_file_index: int) -> str:
     return data[data_file_index][0][0].split('"')[1]
@@ -38,7 +32,7 @@ def pos_y(data, data_file_index: int, row: int):
 def rotation(data, data_file_index: int, row: int):
     return float(data[data_file_index][row][DATA_YAW]) + ANGLE_COMPENSATION
 
-def adapt_data(directory, image_width, image_height, translate: bool) -> list:
+def read_data(directory, image_width, image_height, translate: bool) -> list:
     data_list = []
     pathlist = Path(directory).glob('*.csv')
 
@@ -51,11 +45,6 @@ def adapt_data(directory, image_width, image_height, translate: bool) -> list:
             for row in range(len(datapoints)):
                 datapoints[row][DATA_X] = translate_x(image_width, abs(float(datapoints[row][DATA_X]) + X_ZERO_DISPLACEMENT))
                 datapoints[row][DATA_Y] = translate_y(image_height, abs(float(datapoints[row][DATA_Y]) + Y_ZERO_DISPLACEMENT))
-        else: # only convert data scale
-            for row in range(len(datapoints)):
-                # this sets x_0 and y_0 to be at the down left corner of the image
-                datapoints[row][DATA_X] = abs(float(datapoints[row][DATA_X]) + X_ZERO_DISPLACEMENT)
-                datapoints[row][DATA_Y] = abs(float(datapoints[row][DATA_Y]) + Y_ZERO_DISPLACEMENT)
 
         data_list.append(datapoints)
 

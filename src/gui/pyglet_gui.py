@@ -35,7 +35,8 @@ class CarsWindowManual(pyglet.window.Window):
         self.background_sprite = image_to_sprite(image)
         self.frames_count = 0
 
-        self.translated_data = adapt_data(data_directory, self.scaled_width, self.scaled_height, True)
+        self.data = read_data(data_directory, self.scaled_width, self.scaled_height, False)
+        self.translated_data = read_data(data_directory, self.scaled_width, self.scaled_height, True)
         self.max_data_len = len(self.translated_data[0])
 
         self.vehicle_list = []
@@ -95,8 +96,8 @@ class CarsWindowManual(pyglet.window.Window):
                                     get_timestamp(self.translated_data, data_file_index, self.frames_count), 
                                     object.id,
                                     self.vehicle_list[data_file_index].id,
-                                    translate_x_back(self.vehicle_list[data_file_index].x, self.scaled_width),
-                                    translate_y_back(self.vehicle_list[data_file_index].y, self.scaled_height) 
+                                    pos_x(data=self.data, data_file_index=data_file_index, row=self.frames_count),
+                                    pos_y(data=self.data, data_file_index=data_file_index, row=self.frames_count) 
                                 ])
                         else:
                             # write entry for first intersection with obstacle
@@ -106,8 +107,8 @@ class CarsWindowManual(pyglet.window.Window):
                                     get_timestamp(self.translated_data, data_file_index, self.frames_count), 
                                     object.id,
                                     self.vehicle_list[data_file_index].id,
-                                    translate_x_back(self.vehicle_list[data_file_index].x, self.scaled_width),
-                                    translate_y_back(self.vehicle_list[data_file_index].y, self.scaled_height) 
+                                    pos_x(data=self.data, data_file_index=data_file_index, row=self.frames_count),
+                                    pos_y(data=self.data, data_file_index=data_file_index, row=self.frames_count)  
                                 ])      
         else:
             if not self.collision_written:
