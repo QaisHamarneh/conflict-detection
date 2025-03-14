@@ -16,4 +16,4 @@ To run the code, select a recording and run the `main.py` file.
 
 ## Results
 
-The resulting collision file will be saved as collision_log.csv in the corresponding recording directory.
+The resulting collision file will be saved as `collision_log.csv` in the corresponding recording directory.
