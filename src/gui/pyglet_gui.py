@@ -4,12 +4,13 @@ from enum import Enum
 import pyglet
 
 from src.gui.colors import *
-import src.translation.data_translation as dt
-import src.translation.image_translation as it
-import src.gui.pyglet_vehicle as pyglet_vehicle
-import src.gui.gui_constants as gui_constants
-import src.gui.intersection as intersection
-import src.gui.map_object_creation as moc
+from src.translation.data_translation import *
+from src.translation.image_translation import *
+from src.gui.pyglet_vehicle import Vehicle
+from src.gui.gui_constants import *
+from src.gui.intersection import check_intersection
+from src.gui.map_object_creation import creat_map_objects
+from src.util.file_util import write_csv_collision_file
 
 class Direction(Enum):
     UP = 1
@@ -25,40 +26,44 @@ class Point():
 class CarsWindowManual(pyglet.window.Window):
     def __init__(self, image, data_directory):
         super().__init__()
+        self.data_directory = data_directory
 
-        scaled_width, scaled_height = it.scale_img_size(image)
-        self.set_size(scaled_width, scaled_height)
-        self.set_minimum_size(scaled_width, scaled_height)
-        self.set_location(it.centered_x(image), 0)
-        self.background_sprite = it.image_to_sprite(image)
+        self.scaled_width, self.scaled_height = scale_img_size(image)
+        self.set_size(self.scaled_width, self.scaled_height)
+        self.set_minimum_size(self.scaled_width, self.scaled_height)
+        self.set_location(centered_x(image), 0)
+        self.background_sprite = image_to_sprite(image)
         self.frames_count = 0
 
-        self.translated_data = dt.adapt_data(data_directory, scaled_width, scaled_height, True)
+        self.translated_data = adapt_data(data_directory, self.scaled_width, self.scaled_height, True)
         self.max_data_len = len(self.translated_data[0])
 
         self.vehicle_list = []
         self.vehicle_batch = pyglet.graphics.Batch()
 
         for data_file_index in range(len(self.translated_data)):
-            vehicle = pyglet_vehicle.Vehicle(
-                id=dt.vehicle_id(data=self.translated_data, data_file_index=data_file_index),
-                type=dt.type(data=self.translated_data, data_file_index=data_file_index),
-                x=dt.pos_x(data=self.translated_data, data_file_index=data_file_index, row=self.frames_count),
-                y=dt.pos_y(data=self.translated_data, data_file_index=data_file_index, row=self.frames_count),
-                width=dt.translate_x(pos_x=gui_constants.EGO_WIDTH, image_width=scaled_width),
-                height=dt.translate_y(pos_y=gui_constants.EGO_HEIGHT, image_height=scaled_height),
-                rotation=dt.rotation(data=self.translated_data, data_file_index=data_file_index, row=self.frames_count),
+            vehicle = Vehicle(
+                id=get_vehicle_id(data=self.translated_data, data_file_index=data_file_index),
+                type=get_vehicle_type(data=self.translated_data, data_file_index=data_file_index),
+                x=pos_x(data=self.translated_data, data_file_index=data_file_index, row=self.frames_count),
+                y=pos_y(data=self.translated_data, data_file_index=data_file_index, row=self.frames_count),
+                width=translate_x(pos_x=EGO_WIDTH, image_width=self.scaled_width),
+                height=translate_y(pos_y=EGO_HEIGHT, image_height=self.scaled_height),
+                rotation=rotation(data=self.translated_data, data_file_index=data_file_index, row=self.frames_count),
                 batch=self.vehicle_batch
                 )
             self.vehicle_list.append(vehicle)
             self.max_data_len = max(self.max_data_len, len(self.translated_data[data_file_index]))
 
-        self.map_obj = moc.creat_map_objects(scaled_width, scaled_height)
+        self.map_obj = creat_map_objects(self.scaled_width, self.scaled_height)
+
+        self.collision_list = []
+        self.collision_written = False
             
         self.pause = False
 
         self.event_loop = pyglet.app.EventLoop()
-        pyglet.app.run(1 / gui_constants.FRAME_RATE)
+        pyglet.app.run(1 / FRAME_RATE)
         
     def on_draw(self):
         self.clear()
@@ -75,14 +80,37 @@ class CarsWindowManual(pyglet.window.Window):
             for data_file_index in range(len(self.vehicle_list)):
                 if self.frames_count < len(self.translated_data[data_file_index]):
                     self.vehicle_list[data_file_index].update_position(
-                        dt.pos_x(data=self.translated_data, data_file_index=data_file_index, row=self.frames_count),
-                        dt.pos_y(data=self.translated_data, data_file_index=data_file_index, row=self.frames_count),
-                        dt.rotation(data=self.translated_data, data_file_index=data_file_index, row=self.frames_count)
+                        pos_x(data=self.translated_data, data_file_index=data_file_index, row=self.frames_count),
+                        pos_y(data=self.translated_data, data_file_index=data_file_index, row=self.frames_count),
+                        rotation(data=self.translated_data, data_file_index=data_file_index, row=self.frames_count)
                         )
                     
                     for object in self.map_obj:
-                        if intersection.check_intersection(self.vehicle_list[data_file_index], object):
-                            print(self.vehicle_list[data_file_index].id, "hit", object.id, "at x:", self.vehicle_list[data_file_index].x, "y:", self.vehicle_list[data_file_index].y)                                                                        
+                        if object in self.vehicle_list[data_file_index].intersection:
+                            if not check_intersection(self.vehicle_list[data_file_index], object):
+                                self.vehicle_list[data_file_index].remove_intersection_object(object)
+                                self.collision_list.append([
+                                    get_timestamp(self.translated_data, data_file_index, self.frames_count), 
+                                    object.id,
+                                    self.vehicle_list[data_file_index].id,
+                                    translate_x_back(self.vehicle_list[data_file_index].x, self.scaled_width),
+                                    translate_y_back(self.vehicle_list[data_file_index].y, self.scaled_height) 
+                                ])
+                        else:
+                            if check_intersection(self.vehicle_list[data_file_index], object):
+                                self.vehicle_list[data_file_index].add_intersection_object(object)
+                                self.collision_list.append([
+                                    get_timestamp(self.translated_data, data_file_index, self.frames_count), 
+                                    object.id,
+                                    self.vehicle_list[data_file_index].id,
+                                    translate_x_back(self.vehicle_list[data_file_index].x, self.scaled_width),
+                                    translate_y_back(self.vehicle_list[data_file_index].y, self.scaled_height) 
+                                ])      
+        else:
+            if not self.collision_written:
+                write_csv_collision_file(self.data_directory, self.collision_list)
+                self.collision_written = True
+                print("Wrote collision file.")
                 
     def on_key_press(self, symbol, modifiers):
         if symbol == pyglet.window.key.SPACE:
@@ -93,13 +121,16 @@ class CarsWindowManual(pyglet.window.Window):
             self._update_game()
             print(f"frame = {self.frame_rate}")
         elif symbol == pyglet.window.key.LEFT:
-            self.frames_count = 0 # max(self.frames_count - 1, 0)
+            max(self.frames_count - 1, 0)
             self._update_game()
-            print("Restart")
-            # print(f"frame = {self.frame_rate}")
-        elif symbol == pyglet.window.key.UP:
-            self.frame_rate = min(self.frame_rate + 1, translation.data_constants.FRAME_RATE)
-            print(f"frame rate = {self.frame_rate}")
+            print(f"frame = {self.frame_rate}")
         elif symbol == pyglet.window.key.DOWN:
             self.frame_rate = max(self.frame_rate - 1, 0)
             print(f"frame rate = {self.frame_rate}")
+        elif symbol == pyglet.window.key.BACKSPACE:
+            self.frames_count = 0
+            self._update_game()
+            print("Restart")
+        # elif symbol == pyglet.window.key.UP:
+        #     self.frame_rate = min(self.frame_rate + 1, src.translation.data_constants.FRAME_RATE)
+        #     print(f"frame rate = {self.frame_rate}")

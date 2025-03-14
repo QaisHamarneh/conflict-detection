@@ -1,59 +1,92 @@
 import pyglet
 
-import src.gui.pyglet_vehicle as pyglet_vehicle
-import src.gui.map_object as map_object
-import src.gui.map_object_type as map_object_type
-    
-def _orientation(A, B, C):
-    val = (B[0] - A[0]) * (C[1] - A[1]) - (B[1] - A[1]) * (C[0] - A[0])
-    if val == 0:
-        return 0  # Collinear
-    return 1 if val > 0 else -1
+from src.gui.pyglet_vehicle import Vehicle
+from src.gui.map_object import MapObject
+from src.gui.map_object_type import OjectType
 
-def _on_segment(A, B, C):
-    """Check if point C lies on segment AB (only for collinear points)."""
-    return min(A[0], B[0]) <= C[0] <= max(A[0], B[0]) and min(A[1], B[1]) <= C[1] <= max(A[1], B[1])
+import numpy as np
+import math
 
-def _segments_intersect(A, B, C, D):
-    o1 = _orientation(A, B, C)
-    o2 = _orientation(A, B, D)
-    o3 = _orientation(C, D, A)
-    o4 = _orientation(C, D, B)
+def get_rotated_corners(rect: pyglet.shapes.Rectangle):
+    """
+    Returns the exact positions of a rotated rectangle's corners.
+    """
+    cx, cy = rect.x + rect.width / 2, rect.y + rect.height / 2  # Rectangle center
+    hw, hh = rect.width / 2, rect.height / 2  # Half-width and half-height
+    angle = math.radians(rect.rotation)  # Convert rotation to radians
 
-    if o1 != o2 and o3 != o4:
-        return True  # General case: intersection occurs
-    
-    if o1 == 0 and _on_segment(A, B, C): return True
-    if o2 == 0 and _on_segment(A, B, D): return True
-    if o3 == 0 and _on_segment(C, D, A): return True
-    if o4 == 0 and _on_segment(C, D, B): return True
+    # Unrotated corner positions relative to center
+    corners = [
+        (-hw, -hh),  # Bottom-left
+        (hw, -hh),   # Bottom-right
+        (hw, hh),    # Top-right
+        (-hw, hh)    # Top-left
+    ]
 
-    return False  # No intersection
+    # Rotate and translate each corner
+    rotated_corners = []
+    for x, y in corners:
+        rx = cx + (x * math.cos(angle) - y * math.sin(angle))
+        ry = cy + (x * math.sin(angle) + y * math.cos(angle))
+        rotated_corners.append((rx, ry))
+
+    return rotated_corners
+
+def get_rotated_edges(rect: pyglet.shapes.Rectangle):
+    """
+    Returns the edges (line segments) of a rotated rectangle.
+    """
+    corners = get_rotated_corners(rect)
+
+    # Create edges as (start_point, end_point)
+    edges = [
+        (corners[0], corners[1]),  # Bottom edge
+        (corners[1], corners[2]),  # Right edge
+        (corners[2], corners[3]),  # Top edge
+        (corners[3], corners[0])   # Left edge
+    ]
+
+    return edges
+
+def _segments_intersect(A1, A2, U, V):
+    """
+    Algorithm taken from https://www.baeldung.com/cs/intersection-line-segment-rectangle. 
+    """
+    A = np.array([[A2[0] - A1[0], U[0] - V[0]], [A2[1] - A1[1], U[1]- V[1]]])
+
+    # when lines are parallel
+    if np.linalg.det(A) == 0:
+        return False
+
+    B = np.array([U[0] - A1[0], U[1] - A1[1]])
+
+    result = np.linalg.solve(A, B)
+
+    if 0 <= result[0] <= 1 and 0 <= result[1] <= 1:
+        return True
+    else:
+        return False
 
 def _check_line_rectangle(rect: pyglet.shapes.Rectangle, line: pyglet.shapes.Line):
+    """
+    Algorithm taken and adapted from https://www.baeldung.com/cs/intersection-line-segment-rectangle. 
+    """
     rect.anchor_position = 0, 0
-
-    rect_edges = [
-        ((rect.x, rect.y), (rect.x + rect.width, rect.y)),  # Bottom edge
-        ((rect.x, rect.y + rect.height), (rect.x + rect.width, rect.y + rect.height)),  # Top edge
-        ((rect.x, rect.y), (rect.x, rect.y + rect.height)),  # Left edge
-        ((rect.x + rect.width, rect.y), (rect.x + rect.width, rect.y + rect.height))  # Right edge
-    ]
+    rect_edges = get_rotated_edges(rect)
+    rect.anchor_position = rect.width/2, rect.height/2
 
     line_start = (line.x, line.y)
     line_end = (line.x2, line.y2)
 
-    rect.anchor_position = rect.width/2, rect.height/2
-
     # Check if the given line intersects any rectangle edge
     for edge in rect_edges:
-        if _segments_intersect(line_start, line_end, edge[0], edge[1]):
-            return True  # The line crosses the rectangle
+        if _segments_intersect(edge[0], edge[1], line_start, line_end):
+            return True
 
     return False
 
-def check_intersection(vehicle: pyglet_vehicle.Vehicle, map_object: map_object.MapObject):
-    if map_object.type == map_object_type.Type.LINE:
+def check_intersection(vehicle: Vehicle, map_object: MapObject):
+    if map_object.obj_type == OjectType.LINE:
         return _check_line_rectangle(vehicle, map_object)
     else:
         return False

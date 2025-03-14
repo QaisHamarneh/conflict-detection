@@ -1,5 +1,5 @@
 from enum import Enum
 
-class Type(Enum):
+class VehicleType(Enum):
     AMBULANCE = 'Ambulance'
     OTHER = 'Other'

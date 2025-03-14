@@ -1,14 +1,14 @@
 from pyglet import shapes
 from pyglet.gl import GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA
 
-import src.gui.colors as colors
-import src.gui.vehicle_type as vehicle_type
+from src.gui.colors import *
+from src.gui.vehicle_type import VehicleType
 
 class Vehicle(shapes.Rectangle):
     def __init__(
             self,
             id,
-            type: vehicle_type.Type, 
+            type: VehicleType, 
             x, 
             y, 
             width, 
@@ -20,16 +20,35 @@ class Vehicle(shapes.Rectangle):
             group = None, 
             program = None):
         
-        self.id = id
-        if type == vehicle_type.Type.AMBULANCE:
-            super().__init__(x, y, width, height, colors.RED1, blend_src, blend_dest, batch, group, program)
+        self._id = id
+        if type == VehicleType.AMBULANCE:
+            super().__init__(x, y, width, height, RED1, blend_src, blend_dest, batch, group, program)
         else:
-            super().__init__(x, y, width, height, colors.BLUE, blend_src, blend_dest, batch, group, program)
-        self.rotation = rotation
-        self.anchor_position = width/2, height/2
+            super().__init__(x, y, width, height, BLUE, blend_src, blend_dest, batch, group, program)
+        self._rotation = rotation
+        self._anchor_position = width/2, height/2
+        self._intersection = []
 
     def update_position(self, x: float, y: float, rotation: float):
         self.x = x
         self.y = y
         self.rotation = rotation
+
+    @property
+    def id(self):
+        return self._id
+    
+    @id.setter
+    def id(self, value):
+        self._id = value
+
+    @property
+    def intersection(self):
+        return self._intersection
+    
+    def add_intersection_object(self, object):
+        self._intersection.append(object)
+
+    def remove_intersection_object(self, object):
+        self._intersection.remove(object)
         

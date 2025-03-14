@@ -2,13 +2,13 @@ import pyglet
 import Quartz.CoreGraphics as CG
 import sys
 
-import src.translation.data_constants as constants
+from src.translation.data_constants import *
 
 def _screen_size():
         screen_width = 0
         screen_height = 0
 
-        if (sys.platform == constants.MAC_OS):
+        if (sys.platform == MAC_OS):
             display_id = CG.CGMainDisplayID()
 
             modes = CG.CGDisplayCopyAllDisplayModes(display_id, None)
@@ -19,7 +19,7 @@ def _screen_size():
                 screen_width = max(screen_width, width)
                 screen_height = max(screen_height, height)
 
-        elif (sys.platform == constants.LINUX):
+        elif (sys.platform == LINUX):
             pass
         else:
             pass
